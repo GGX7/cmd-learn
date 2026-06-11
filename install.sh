@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # cmd-learn インストーラー
-# 使い方: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/cmd-learn/main/install.sh)"
+# 使い方: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/実際のユーザー名/cmd-learn/main/install.sh)"
 
 set -e
 
-REPO_URL="https://github.com/YOUR_USERNAME/cmd-learn.git"
+REPO_URL="https://github.com/実際のユーザー名/cmd-learn.git"
 INSTALL_DIR="$HOME/.cmd-learn"
 BIN_DIR="$HOME/.local/bin"
 SHELL_CONFIG=""
