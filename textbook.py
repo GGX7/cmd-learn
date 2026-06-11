@@ -7,7 +7,7 @@ from pathlib import Path
 import display as d
 import progress
 import lessons as les
-from questions import CATEGORIES
+import lang as _lang
 
 SANDBOX_DIR = Path("/tmp/cmd_learn_sandbox")
 
@@ -17,29 +17,45 @@ SANDBOX_DIR = Path("/tmp/cmd_learn_sandbox")
 # ──────────────────────────────────────────────────────────────
 
 def _setup_sandbox() -> Path:
-    """サンドボックスを初期状態にリセットする"""
     if SANDBOX_DIR.exists():
         shutil.rmtree(SANDBOX_DIR)
     SANDBOX_DIR.mkdir(parents=True)
 
-    (SANDBOX_DIR / "hello.txt").write_text(
-        "こんにちは、World!\nこれはサンプルファイルです。\n3行目のテキストです。\n"
-    )
+    if _lang.LANG == "en":
+        (SANDBOX_DIR / "hello.txt").write_text(
+            "Hello, World!\nThis is a sample file.\nThis is the third line.\n"
+        )
+        (SANDBOX_DIR / "log.txt").write_text(
+            "2024-01-01 INFO: Server started\n"
+            "2024-01-01 ERROR: Database connection error\n"
+            "2024-01-02 INFO: Reconnected\n"
+            "2024-01-02 ERROR: Connection timed out\n"
+            "2024-01-03 INFO: Backup completed\n"
+        )
+        (SANDBOX_DIR / ".hidden").write_text("This is a hidden file\n")
+        docs = SANDBOX_DIR / "docs"
+        docs.mkdir()
+        (docs / "readme.txt").write_text("Project documentation\n")
+    else:
+        (SANDBOX_DIR / "hello.txt").write_text(
+            "こんにちは、World!\nこれはサンプルファイルです。\n3行目のテキストです。\n"
+        )
+        (SANDBOX_DIR / "log.txt").write_text(
+            "2024-01-01 INFO: サーバーが起動しました\n"
+            "2024-01-01 ERROR: データベース接続エラー\n"
+            "2024-01-02 INFO: 再接続しました\n"
+            "2024-01-02 ERROR: タイムアウトが発生しました\n"
+            "2024-01-03 INFO: バックアップ完了\n"
+        )
+        (SANDBOX_DIR / ".hidden").write_text("これは隠しファイルです\n")
+        docs = SANDBOX_DIR / "docs"
+        docs.mkdir()
+        (docs / "readme.txt").write_text("プロジェクトのドキュメントです\n")
+
     (SANDBOX_DIR / "numbers.txt").write_text("3\n1\n4\n1\n5\n9\n2\n6\n5\n3\n")
-    (SANDBOX_DIR / "log.txt").write_text(
-        "2024-01-01 INFO: サーバーが起動しました\n"
-        "2024-01-01 ERROR: データベース接続エラー\n"
-        "2024-01-02 INFO: 再接続しました\n"
-        "2024-01-02 ERROR: タイムアウトが発生しました\n"
-        "2024-01-03 INFO: バックアップ完了\n"
-    )
     (SANDBOX_DIR / "data.csv").write_text(
         "name,age,city\nAlice,30,Tokyo\nBob,25,Osaka\nCarol,35,Kyoto\n"
     )
-    (SANDBOX_DIR / ".hidden").write_text("これは隠しファイルです\n")
-    docs = SANDBOX_DIR / "docs"
-    docs.mkdir()
-    (docs / "readme.txt").write_text("プロジェクトのドキュメントです\n")
     src = SANDBOX_DIR / "src"
     src.mkdir()
     (src / "main.py").write_text("print('Hello, World!')\n")
@@ -48,7 +64,6 @@ def _setup_sandbox() -> Path:
 
 
 def _run_command(cmd: str, cwd: Path | None = None, timeout: int = 10) -> str:
-    """コマンドを実行して出力を返す"""
     try:
         result = subprocess.run(
             cmd, shell=True, capture_output=True, text=True,
@@ -56,11 +71,11 @@ def _run_command(cmd: str, cwd: Path | None = None, timeout: int = 10) -> str:
             timeout=timeout,
         )
         output = (result.stdout + result.stderr).rstrip()
-        return output if output else "(出力なし)"
+        return output if output else _lang.t("tb_no_output")
     except subprocess.TimeoutExpired:
-        return "(タイムアウト: 10秒以内に完了しませんでした)"
+        return _lang.t("tb_timeout")
     except Exception as e:
-        return f"(エラー: {e})"
+        return f"(error: {e})"
 
 
 # ──────────────────────────────────────────────────────────────
@@ -68,25 +83,23 @@ def _run_command(cmd: str, cwd: Path | None = None, timeout: int = 10) -> str:
 # ──────────────────────────────────────────────────────────────
 
 def _show_overview(lesson: dict):
-    """タイトル・説明・構文・オプションを表示する"""
     d.clear_screen()
     d.print_header(f"{lesson['command']}  —  {lesson['title']}")
 
-    print(d.c("  📖 説明", d.Color.BOLD + d.Color.CYAN))
+    print(d.c(_lang.t("tb_desc"), d.Color.BOLD + d.Color.CYAN))
     for line in lesson["description"].strip().splitlines():
         print(f"  {line}")
     print()
 
-    print(d.c("  📋 構文", d.Color.BOLD + d.Color.CYAN))
+    print(d.c(_lang.t("tb_syntax"), d.Color.BOLD + d.Color.CYAN))
     for line in lesson["syntax"].strip().splitlines():
         print(f"  {d.c(line, d.Color.YELLOW)}")
     print()
 
     if lesson.get("options"):
-        print(d.c("  ⚙️  主なオプション", d.Color.BOLD + d.Color.CYAN))
+        print(d.c(_lang.t("tb_options"), d.Color.BOLD + d.Color.CYAN))
         for opt, desc in lesson["options"]:
             opt_str = d.c(opt, d.Color.GREEN)
-            # 表示幅を揃えるためにパディング（ANSI エスケープ分を補正）
             pad = max(1, 26 - len(opt))
             print(f"  {opt_str}{' ' * pad}{desc}")
         print()
@@ -95,9 +108,8 @@ def _show_overview(lesson: dict):
 
 
 def _run_example(ex: dict, sandbox: Path, idx: int, total: int) -> bool:
-    """1つの例を表示・実行する。False を返すとレッスンを中断。"""
     d.clear_screen()
-    print(d.c(f"  例 {idx}/{total}", d.Color.DIM))
+    print(d.c(_lang.t("tb_example", n=idx, total=total), d.Color.DIM))
     print()
     print(d.c(f"  {ex['desc']}", d.Color.BOLD + d.Color.WHITE))
     print()
@@ -107,15 +119,15 @@ def _run_example(ex: dict, sandbox: Path, idx: int, total: int) -> bool:
 
     if not ex.get("runnable", True):
         if ex.get("simulated_output"):
-            print(d.c("  ─── 出力イメージ " + "─" * 25, d.Color.DIM))
+            print(d.c(_lang.t("tb_sim_hdr"), d.Color.DIM))
             for line in ex["simulated_output"].splitlines():
                 print(f"  {d.c(line, d.Color.WHITE)}")
-            print(d.c("  " + "─" * 41, d.Color.DIM))
+            print(d.c(_lang.t("tb_divider"), d.Color.DIM))
         _show_note(ex)
         d.press_enter()
         return True
 
-    choice = d.prompt("[r] 実行する  [s] スキップ  [q] レッスン終了").lower()
+    choice = d.prompt(_lang.t("tb_run_prompt")).lower()
     if choice == "q":
         return False
 
@@ -123,10 +135,10 @@ def _run_example(ex: dict, sandbox: Path, idx: int, total: int) -> bool:
         cwd = sandbox if ex.get("cwd") == "sandbox" else None
         output = _run_command(ex["cmd"], cwd)
         print()
-        print(d.c("  ─── 実行結果 " + "─" * 28, d.Color.DIM))
+        print(d.c(_lang.t("tb_run_hdr"), d.Color.DIM))
         for line in output.splitlines():
             print(f"  {d.c(line, d.Color.WHITE)}")
-        print(d.c("  " + "─" * 41, d.Color.DIM))
+        print(d.c(_lang.t("tb_divider"), d.Color.DIM))
 
     _show_note(ex)
     print()
@@ -141,7 +153,6 @@ def _show_note(ex: dict):
 
 
 def run_lesson(lesson: dict):
-    """1つのレッスンを最初から実行する"""
     progress.mark_lesson_started(lesson["id"])
     _show_overview(lesson)
 
@@ -158,7 +169,7 @@ def run_lesson(lesson: dict):
         progress.mark_lesson_completed(lesson["id"])
         d.clear_screen()
         print()
-        print(d.c("  ✓ レッスン完了！進捗が更新されました。", d.Color.GREEN + d.Color.BOLD))
+        print(d.c(_lang.t("tb_complete"), d.Color.GREEN + d.Color.BOLD))
         print()
         d.press_enter()
 
@@ -169,11 +180,12 @@ def run_lesson(lesson: dict):
 
 def show_lesson_list(category: str):
     lesson_list = les.get_by_category(category)
-    cat_label = CATEGORIES.get(category, category)
+    cats = _lang.get_categories()
+    cat_label = cats.get(category, category)
 
     while True:
         d.clear_screen()
-        d.print_header(f"{cat_label}  —  レッスン一覧")
+        d.print_header(f"{cat_label}{_lang.t('tb_lesson_list')}")
 
         raw_data = progress.get_raw()
         for i, lesson in enumerate(lesson_list, 1):
@@ -188,11 +200,11 @@ def show_lesson_list(category: str):
             print(f"  {icon} {d.c(str(i), d.Color.YELLOW + d.Color.BOLD)}) {title_str}")
 
         print()
-        print(d.c("  ✓=完了  →=開始済み  ○=未開始", d.Color.DIM))
+        print(d.c(f"  {_lang.t('tb_legend')}", d.Color.DIM))
         print()
-        d.print_menu([("0", "戻る")])
+        d.print_menu([("0", _lang.t("menu_back"))])
 
-        raw = d.prompt("選択")
+        raw = d.prompt(_lang.t("choose"))
         if raw == "0":
             break
         if raw.isdigit() and 1 <= int(raw) <= len(lesson_list):
@@ -208,13 +220,14 @@ def run_textbook():
 
     while True:
         d.clear_screen()
-        d.print_header("📚 教科書で学ぶ")
-        print(d.c("  コマンドの解説を読み、実際に試してみよう！\n", d.Color.DIM))
+        d.print_header(_lang.t("tb_header"))
+        print(d.c(f"  {_lang.t('tb_subtitle')}\n", d.Color.DIM))
 
         raw_data = progress.get_raw()
-        keys = list(CATEGORIES.keys())
+        cats = _lang.get_categories()
+        keys = list(cats.keys())
 
-        for i, (cat_key, cat_label) in enumerate(CATEGORIES.items(), 1):
+        for i, (cat_key, cat_label) in enumerate(cats.items(), 1):
             ids = lesson_ids_by_cat.get(cat_key, [])
             completed = sum(1 for lid in ids if lid in raw_data["lessons_completed"])
             total = len(ids)
@@ -226,8 +239,8 @@ def run_textbook():
             print(f"  {d.c(str(i), d.Color.YELLOW + d.Color.BOLD)})  {cat_label:<22} {bar} {count}")
 
         print()
-        d.print_menu([("0", "戻る")])
-        raw = d.prompt("選択")
+        d.print_menu([("0", _lang.t("menu_back"))])
+        raw = d.prompt(_lang.t("choose"))
 
         if raw == "0":
             break

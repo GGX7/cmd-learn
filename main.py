@@ -3,12 +3,13 @@
 
 import sys
 
+import lang as _lang
 import display as d
 import quiz_engine as qe
 import textbook as tb
 import progress
 import lessons as les
-from questions import QUESTIONS, CATEGORIES, get_by_category, get_all
+from questions import get_by_category, get_all
 
 
 BANNER = r"""
@@ -18,8 +19,33 @@ BANNER = r"""
 / /___ | (_) || | | | | |/ /_\ \ |_| | (_| | |  /
 \____/  \___/ |_| |_| |_|\____/ \__,_|\__,_|_|/
 
-   Linux / macOS コマンド学習ツール  for Beginners
+   Linux / macOS Command Learning Tool  for Beginners
 """
+
+
+# ──────────────────────────────────────────────────────────────
+# 言語選択 / Language Selection
+# ──────────────────────────────────────────────────────────────
+
+def select_language():
+    d.clear_screen()
+    print(d.c(BANNER, d.Color.CYAN))
+    print(d.c(f"  ─── {_lang.t('lang_select_title')} ───", d.Color.BOLD))
+    print()
+    d.print_menu([
+        ("1", _lang.t("lang_ja")),
+        ("2", _lang.t("lang_en")),
+    ])
+    while True:
+        choice = d.prompt("1 / 2").strip()
+        if choice == "1":
+            _lang.set_lang("ja")
+            break
+        elif choice == "2":
+            _lang.set_lang("en")
+            break
+        else:
+            print(d.c("  1 or 2", d.Color.RED))
 
 
 # ──────────────────────────────────────────────────────────────
@@ -27,16 +53,16 @@ BANNER = r"""
 # ──────────────────────────────────────────────────────────────
 
 def _ask_difficulty() -> int | None:
-    print(d.c("  難易度を選んでください:", d.Color.BOLD))
+    print(d.c(f"  {_lang.t('difficulty_prompt')}", d.Color.BOLD))
     d.print_menu([
-        ("1", "易  ★☆☆"),
-        ("2", "中  ★★☆"),
-        ("3", "難  ★★★"),
-        ("0", "すべて"),
+        ("1", _lang.t("diff_easy")),
+        ("2", _lang.t("diff_med")),
+        ("3", _lang.t("diff_hard")),
+        ("0", _lang.t("diff_all")),
     ])
-    raw = d.prompt("選択").strip()
+    raw = d.prompt(_lang.t("choose")).strip()
     if raw not in ("0", "1", "2", "3"):
-        print(d.c("  無効な入力です。", d.Color.RED))
+        print(d.c(f"  {_lang.t('invalid_input')}", d.Color.RED))
         return None
     return int(raw) if raw != "0" else 0
 
@@ -46,18 +72,19 @@ def _filter_difficulty(qs, diff: int):
 
 
 def category_quiz():
+    cats = _lang.get_categories()
     d.clear_screen()
-    d.print_header("📝 カテゴリ別クイズ")
-    keys = list(CATEGORIES.keys())
-    menu = [(str(i + 1), label) for i, (_, label) in enumerate(CATEGORIES.items())]
-    menu.append(("0", "戻る"))
+    d.print_header(_lang.t("quiz_category"))
+    keys = list(cats.keys())
+    menu = [(str(i + 1), label) for i, (_, label) in enumerate(cats.items())]
+    menu.append(("0", _lang.t("menu_back")))
     d.print_menu(menu)
 
-    raw = d.prompt("選択")
+    raw = d.prompt(_lang.t("choose"))
     if raw == "0":
         return
     if not raw.isdigit() or int(raw) < 1 or int(raw) > len(keys):
-        print(d.c("  無効な入力です。", d.Color.RED))
+        print(d.c(f"  {_lang.t('invalid_input')}", d.Color.RED))
         d.press_enter()
         return
 
@@ -69,16 +96,16 @@ def category_quiz():
 
     qs = _filter_difficulty(get_by_category(category), diff)
     if not qs:
-        print(d.c("  その難易度の問題はありません。", d.Color.RED))
+        print(d.c(f"  {_lang.t('quiz_no_diff')}", d.Color.RED))
         d.press_enter()
         return
 
-    qe.run_quiz(qs, CATEGORIES[category])
+    qe.run_quiz(qs, cats[category])
 
 
 def random_quiz():
     d.clear_screen()
-    d.print_header("🔀 ランダム出題")
+    d.print_header(_lang.t("quiz_random"))
 
     diff = _ask_difficulty()
     if diff is None:
@@ -87,23 +114,23 @@ def random_quiz():
 
     qs = _filter_difficulty(get_all(), diff)
     if not qs:
-        print(d.c("  該当する問題がありません。", d.Color.RED))
+        print(d.c(f"  {_lang.t('quiz_no_match')}", d.Color.RED))
         d.press_enter()
         return
 
-    qe.run_quiz(qs, "ランダムクイズ")
+    qe.run_quiz(qs, _lang.t("quiz_rand_title"))
 
 
 def quiz_menu():
     while True:
         d.clear_screen()
-        d.print_header("📝 クイズで練習する")
+        d.print_header(_lang.t("quiz_practice"))
         d.print_menu([
-            ("1", "カテゴリ別クイズ"),
-            ("2", "ランダム出題（全カテゴリ）"),
-            ("0", "戻る"),
+            ("1", _lang.t("quiz_cat_label")),
+            ("2", _lang.t("quiz_rand_label")),
+            ("0", _lang.t("menu_back")),
         ])
-        choice = d.prompt("選択")
+        choice = d.prompt(_lang.t("choose"))
         if choice == "1":
             category_quiz()
         elif choice == "2":
@@ -111,7 +138,7 @@ def quiz_menu():
         elif choice == "0":
             break
         else:
-            print(d.c("  1・2・0 のいずれかを入力してください。", d.Color.RED))
+            print(d.c(f"  {_lang.t('quiz_invalid_menu')}", d.Color.RED))
             d.press_enter()
 
 
@@ -120,13 +147,14 @@ def quiz_menu():
 # ──────────────────────────────────────────────────────────────
 
 def show_command_list():
+    cats = _lang.get_categories()
     d.clear_screen()
-    d.print_header("📖 コマンド一覧")
+    d.print_header(_lang.t("cmd_list_header"))
 
     seen: set[str] = set()
-    for cat_key, cat_label in CATEGORIES.items():
+    for cat_key, cat_label in cats.items():
         print(d.c(f"  {cat_label}", d.Color.BOLD + d.Color.CYAN))
-        for q in QUESTIONS:
+        for q in get_all():
             if q["category"] != cat_key:
                 continue
             cmd = q["answer"].split()[0]
@@ -151,51 +179,48 @@ def _progress_bar(current: int, total: int, width: int = 10) -> str:
 
 
 def show_progress():
+    cats = _lang.get_categories()
     d.clear_screen()
-    d.print_header("📊 学習進捗")
+    d.print_header(_lang.t("progress_header"))
 
     lesson_ids_by_cat = les.get_lesson_ids_by_category()
     question_ids_by_cat: dict[str, list[str]] = {}
-    for q in QUESTIONS:
+    for q in get_all():
         question_ids_by_cat.setdefault(q["category"], []).append(q["id"])
 
     total_l_done = total_l_all = 0
     total_q_correct = total_q_attempts = 0
 
-    # ヘッダー行
-    col1 = d.c("  カテゴリ", d.Color.BOLD)
-    col2 = d.c("教科書", d.Color.BOLD + d.Color.CYAN)
-    col3 = d.c("クイズ正答率", d.Color.BOLD + d.Color.YELLOW)
+    col1 = d.c(_lang.t("progress_cat_col"), d.Color.BOLD)
+    col2 = d.c(_lang.t("progress_tb_col"), d.Color.BOLD + d.Color.CYAN)
+    col3 = d.c(_lang.t("progress_qz_col"), d.Color.BOLD + d.Color.YELLOW)
     print(f"{col1:<35} {col2:<20} {col3}")
     print(d.c("  " + "─" * 58, d.Color.DIM))
 
-    for cat_key, cat_label in CATEGORIES.items():
+    for cat_key, cat_label in cats.items():
         l_ids = lesson_ids_by_cat.get(cat_key, [])
         q_ids = question_ids_by_cat.get(cat_key, [])
         stats = progress.get_category_stats(l_ids, q_ids)
 
-        # 教科書バー
         l_bar = _progress_bar(stats["lessons_completed"], stats["lessons_total"])
         l_color = d.Color.GREEN if stats["lessons_completed"] == stats["lessons_total"] and stats["lessons_total"] > 0 else d.Color.YELLOW
         l_str = f"{d.c(l_bar, l_color)} {stats['lessons_completed']}/{stats['lessons_total']}"
 
-        # クイズバー
         if stats["quiz_attempts"] > 0:
             rate = stats["quiz_correct"] / stats["quiz_attempts"] * 100
             q_bar = _progress_bar(stats["quiz_correct"], stats["quiz_attempts"])
             q_color = d.Color.GREEN if rate >= 80 else d.Color.YELLOW if rate >= 50 else d.Color.RED
             q_str = f"{d.c(q_bar, q_color)} {rate:.0f}% ({stats['quiz_correct']}/{stats['quiz_attempts']})"
         else:
-            q_str = d.c("未受験", d.Color.DIM)
+            q_str = d.c(_lang.t("progress_not_taken"), d.Color.DIM)
 
         print(f"  {cat_label:<22} {l_str:<30} {q_str}")
 
-        total_l_done    += stats["lessons_completed"]
-        total_l_all     += stats["lessons_total"]
-        total_q_correct += stats["quiz_correct"]
+        total_l_done     += stats["lessons_completed"]
+        total_l_all      += stats["lessons_total"]
+        total_q_correct  += stats["quiz_correct"]
         total_q_attempts += stats["quiz_attempts"]
 
-    # 合計行
     print(d.c("  " + "─" * 58, d.Color.DIM))
     total_l_bar = _progress_bar(total_l_done, total_l_all)
     l_color = d.Color.GREEN if total_l_done == total_l_all and total_l_all > 0 else d.Color.YELLOW
@@ -207,39 +232,41 @@ def show_progress():
         q_color = d.Color.GREEN if total_rate >= 80 else d.Color.YELLOW if total_rate >= 50 else d.Color.RED
         total_q_str = f"{d.c(total_q_bar, q_color)} {total_rate:.0f}% ({total_q_correct}/{total_q_attempts})"
     else:
-        total_q_str = d.c("未受験", d.Color.DIM)
+        total_q_str = d.c(_lang.t("progress_not_taken"), d.Color.DIM)
 
-    print(f"  {'合計':<22} {total_l_str:<30} {total_q_str}")
+    print(f"  {_lang.t('progress_total'):<22} {total_l_str:<30} {total_q_str}")
 
-    # 最終更新日時
     last = progress.get_last_updated()
     if last:
         print()
-        print(d.c(f"  最終更新: {last}", d.Color.DIM))
+        print(d.c(f"  {_lang.t('progress_last_updated', ts=last)}", d.Color.DIM))
 
     print()
-    d.print_menu([("r", "進捗をリセットする"), ("Enter", "戻る")])
-    choice = d.prompt("選択").lower()
+    d.print_menu([
+        ("r", _lang.t("progress_reset_label")),
+        (_lang.t("menu_enter"), _lang.t("menu_back")),
+    ])
+    choice = d.prompt(_lang.t("choose")).lower()
     if choice == "r":
         _confirm_reset()
 
 
 def _confirm_reset():
     d.clear_screen()
-    d.print_header("⚠️  進捗リセット")
-    print(d.c("  教科書の完了記録とクイズの回答履歴がすべて削除されます。", d.Color.YELLOW))
-    print(d.c("  この操作は元に戻せません。", d.Color.RED + d.Color.BOLD))
+    d.print_header(_lang.t("progress_reset_header"))
+    print(d.c(f"  {_lang.t('progress_reset_warn1')}", d.Color.YELLOW))
+    print(d.c(f"  {_lang.t('progress_reset_warn2')}", d.Color.RED + d.Color.BOLD))
     print()
-    raw = d.prompt("本当にリセットしますか？ [yes でリセット / その他でキャンセル]")
+    raw = d.prompt(_lang.t("progress_reset_confirm"))
     if raw.strip().lower() == "yes":
         progress.reset()
         d.clear_screen()
         print()
-        print(d.c("  ✓ 進捗をリセットしました。", d.Color.GREEN + d.Color.BOLD))
+        print(d.c(_lang.t("progress_reset_done"), d.Color.GREEN + d.Color.BOLD))
         print()
         d.press_enter()
     else:
-        print(d.c("  キャンセルしました。", d.Color.DIM))
+        print(d.c(_lang.t("progress_cancel"), d.Color.DIM))
         d.press_enter()
 
 
@@ -248,19 +275,21 @@ def _confirm_reset():
 # ──────────────────────────────────────────────────────────────
 
 def main():
+    select_language()
+
     while True:
         d.clear_screen()
         print(d.c(BANNER, d.Color.CYAN))
-        print(d.c("  メニュー", d.Color.BOLD))
+        print(d.c(f"  {_lang.t('menu_title')}", d.Color.BOLD))
         d.print_menu([
-            ("1", "📚 教科書で学ぶ   — 解説を読んで実際に試す"),
-            ("2", "📝 クイズで練習する — カテゴリ別 / ランダム出題"),
-            ("3", "📖 コマンド一覧を見る"),
-            ("4", "📊 学習進捗を確認する"),
-            ("q", "終了"),
+            ("1", _lang.t("menu_1")),
+            ("2", _lang.t("menu_2")),
+            ("3", _lang.t("menu_3")),
+            ("4", _lang.t("menu_4")),
+            ("q", _lang.t("menu_quit")),
         ])
 
-        choice = d.prompt("選択")
+        choice = d.prompt(_lang.t("choose"))
 
         if choice == "1":
             tb.run_textbook()
@@ -272,10 +301,10 @@ def main():
             show_progress()
         elif choice.lower() == "q":
             d.clear_screen()
-            print(d.c("\n  お疲れさまでした！また学習しましょう。\n", d.Color.GREEN + d.Color.BOLD))
+            print(d.c(_lang.t("farewell"), d.Color.GREEN + d.Color.BOLD))
             sys.exit(0)
         else:
-            print(d.c("  1〜4 または q を入力してください。", d.Color.RED))
+            print(d.c(f"  {_lang.t('menu_invalid_range')}", d.Color.RED))
             d.press_enter()
 
 
