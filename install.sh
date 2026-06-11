@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # cmd-learn インストーラー
-# 使い方: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/実際のユーザー名/cmd-learn/main/install.sh)"
+# 使い方: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/GGX7/cmd-learn/main/install.sh)"
 
 set -e
 
