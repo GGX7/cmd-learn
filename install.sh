@@ -4,7 +4,7 @@
 
 set -e
 
-REPO_URL="https://github.com/実際のユーザー名/cmd-learn.git"
+REPO_URL="https://github.com/GGX7/cmd-learn.git"
 INSTALL_DIR="$HOME/.cmd-learn"
 BIN_DIR="$HOME/.local/bin"
 SHELL_CONFIG=""
