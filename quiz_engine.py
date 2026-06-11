@@ -40,7 +40,9 @@ def run_quiz(questions: list[Question], title: str):
         d.print_question(i, total, q["question"], cat_name, q["difficulty"])
 
         if q["type"] == "choice":
-            d.print_choices(q["choices"])
+            shuffled = list(q["choices"])
+            random.shuffle(shuffled)
+            d.print_choices(shuffled)
             while True:
                 raw = d.prompt(_lang.t("qe_choice_prompt")).lower()
                 idx_str = ANSWER_ALIASES.get(raw, raw)
@@ -48,7 +50,7 @@ def run_quiz(questions: list[Question], title: str):
                     break
                 print(d.c(_lang.t("qe_choice_invalid"), d.Color.RED))
 
-            chosen = q["choices"][int(idx_str)]
+            chosen = shuffled[int(idx_str)]
             is_correct = (chosen == q["answer"])
         else:
             answer_input = d.prompt(_lang.t("qe_fill_prompt"))
