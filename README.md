@@ -27,7 +27,7 @@
 ### ワンコマンドインストール
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/実際のユーザー名/cmd-learn/main/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/GGX7/cmd-learn/main/install.sh)"
 ```
 
 インストール後、設定を反映して起動します：
@@ -40,7 +40,7 @@ cmd-learn
 ### 手動インストール（git clone）
 
 ```bash
-git clone https://github.com/実際のユーザー名/cmd-learn.git ~/.cmd-learn
+git clone https://github.com/GGX7/cmd-learn.git ~/.cmd-learn
 ~/.cmd-learn/cmd-learn
 ```
 
@@ -68,7 +68,7 @@ git clone https://github.com/実際のユーザー名/cmd-learn.git ~/.cmd-learn
 インストールスクリプトを再実行すると最新版に更新されます：
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/実際のユーザー名/cmd-learn/main/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/GGX7/cmd-learn/main/install.sh)"
 ```
 
 ---
